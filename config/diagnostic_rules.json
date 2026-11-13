@@ -1,0 +1,32 @@
+{
+    "rules": [
+        {
+            "id": "bearing_fault",
+            "name": "Csapágyjellegű rendellenesség",
+            "description": "Impulzivitás és magas frekvenciás energia növekedése.",
+            "conditions": {"kurtosis_min": 3.5},
+            "weight": 8
+        },
+        {
+            "id": "misalignment",
+            "name": "Tengelybeállítási hiba gyanúja",
+            "description": "Domináns 1x és 2x fordulatszám-harmonikusok.",
+            "conditions": {"1x_amp_min": 1.5, "2x_1x_ratio_min": 0.3},
+            "weight": 7
+        },
+        {
+            "id": "looseness",
+            "name": "Mechanikai lazaság gyanúja",
+            "description": "Több forgási harmonikus jelenléte (3x, 4x stb.).",
+            "conditions": {"harmonics_count_min": 4},
+            "weight": 6
+        },
+        {
+            "id": "foundation",
+            "name": "Alap- vagy rögzítési probléma lehetősége",
+            "description": "Alacsony frekvenciás dominancia, géplábi mérésből megerősítendő.",
+            "conditions": {"1x_amp_min": 2.5},
+            "weight": 5
+        }
+    ]
+}
