@@ -1,33 +1,28 @@
-# PumpDiag Web - Használati Utasítás
+# Használati Utasítás
 
-## 1. Az alkalmazás megnyitása
-- Indítsd el az alkalmazást a telepítési útmutató (TELEPITES_HU.md) szerint.
-- Nyisd meg a böngészőben a kapott localhost címet.
+## 1. Demó indítása
+A Kezdőlapon válaszd ki a szimulált hibajelleget (pl. Tengelybeállítási hiba), majd kattints a "Demó betöltése" gombra. Ezzel az adatok betöltődnek a memóriába.
 
-## 2. Demó elindítása
-- A Kezdőlapon kattints a "Tengelybeállítási hiba demó betöltése" vagy a "Csapágyhiba demó betöltése" gombra.
-- Várj, amíg megjelenik a "Demó betöltve" zöld üzenet.
+## 2. Saját CSV feltöltése
+A Kezdőlapon a "Saját CSV feltöltése" dobozban húzd be a fájlt. 
+Elvárás: a CSV tartalmazzon egy `time_s` nevű oszlopot (az idő másodpercben), és legalább egy adatcsatornát (a mért értékekkel, pl. $m/s^2$-ben).
 
-## 3. Saját mérési fájlok feltöltése
-- Kattints a "Browse files" gombra a fájlfeltöltőben.
-- Válassz egy CSV formátumú mérési adatfájlt.
-- Elvárt oszlopok: `time_s` (idő másodpercben) és tetszőleges rezgéscsatornák (pl. `pump_de_h`), mértékegység: m/s².
+## 3. Elemzés indítása
+- Lépj az **"Elemzés és Feldolgozás"** fülre.
+- Válaszd ki az elemzendő csatornát.
+- Add meg a pontos névleges fordulatszámot (RPM).
+- Állítsd be a burkológörbe-spektrumhoz tartozó szűrősávot.
+- Opcionálisan add meg a mérési pont lokalizációját (ez szükséges a rögzítési hibák vizsgálatához).
+- Kattints az **"Elemzés indítása"** gombra. (Az adatok ellenőrzésen esnek át. Ha kritikus hiba van, a program leállítja az elemzést.)
 
-## 4. Elemzés indítása
-- Lépj át az "Elemzés" fülre.
-- A lenyíló listából válaszd ki a vizsgálandó rezgéscsatornát.
-- Add meg a névleges fordulatszámot (RPM).
-- Kattints az "Elemzés indítása" gombra.
+## 4. Diagramok
+A **"Diagramok"** fülön interaktív ábrákat találsz. A rendszer csúcsmegőrző algoritmust használ a böngésző tehermentesítésére.
+Nagyítani kijelöléssel tudsz, az eredeti nézethez duplán kattints az ábrán.
 
-## 5. Diagramok kezelése és értelmezése
-- Lépj a "Diagramok" fülre.
-- Itt látható a gyorsulás-időjel (interaktívan nagyítható).
-- Alatta az amplitúdóspektrum, piros szaggatott vonalakkal jelölve a forgási harmonikusokat (1x, 2x, 3x...).
+## 5. Bizonyítékok és Jelentés
+A **"Diagnosztika & Jelentés"** fül bemutatja az elsődleges hibajelleget és az időtartományi mutatókat (RMS, Kurtózis stb.).
+A "Részletes Bizonyítékok" alatt lenyitható dobozokban látod, hogy egy-egy hiba (pl. csapágyhiba, mechanikai lazaság) mennyi támogató (✅), ellentmondó (❌) vagy hiányzó (⚠️) bizonyítékkal rendelkezik.
+Az oldal alján található gombbal egy formázott **PDF jelentést** tölthetsz le.
 
-## 6. Diagnosztikai eredmény
-- A "Diagnosztika & Jelentés" fülön a legfelső doboz jelzi az elsődleges gyanút (pl. Tengelybeállítási hiba gyanúja).
-- Fontos: Ez nem minősül automatikus bizonyosságnak, hanem a frekvencia-jellemzőkből levont statisztikai következtetés.
-
-## 7. PDF és adatok letöltése
-- Ugyanezen a fülön kattints a "PDF Letöltése" gombra a riport mentéséhez.
-- A "Mentés" fülön a teljes diagnosztikai eredményt ZIP-ben kimentheted.
+## 6. Projekt mentése és visszatöltése
+A **"Mentés & Visszatöltés"** fülön a teljes munkamenetet lementheted egyetlen ZIP fájlba, majd később ugyanitt visszatöltheted, hogy folytasd az elemzést.

@@ -3,30 +3,43 @@
         {
             "id": "bearing_fault",
             "name": "Csapágyjellegű rendellenesség",
-            "description": "Impulzivitás és magas frekvenciás energia növekedése.",
-            "conditions": {"kurtosis_min": 3.5},
-            "weight": 8
+            "description": "Impulzivitás, periodikus ütések és magas frekvenciás energia növekedése.",
+            "conditions": {
+                "kurtosis_min": 3.5
+            },
+            "weight": 8,
+            "recommendation": "Burkológörbe-spektrum ellenőrzése, csapágyhang-vizsgálat, trendkövetés."
         },
         {
             "id": "misalignment",
             "name": "Tengelybeállítási hiba gyanúja",
-            "description": "Domináns 1x és 2x fordulatszám-harmonikusok.",
-            "conditions": {"1x_amp_min": 1.5, "2x_1x_ratio_min": 0.3},
-            "weight": 7
+            "description": "Domináns 1x és 2x fordulatszám-harmonikusok jelenléte.",
+            "conditions": {
+                "1x_amp_min": 1.5,
+                "2x_1x_ratio_min": 0.3
+            },
+            "weight": 7,
+            "recommendation": "Axiális irányú mérés, csatornaközi fázisvizsgálat, lézeres egytengelyűség-ellenőrzés."
         },
         {
             "id": "looseness",
             "name": "Mechanikai lazaság gyanúja",
-            "description": "Több forgási harmonikus jelenléte (3x, 4x stb.).",
-            "conditions": {"harmonics_count_min": 4},
-            "weight": 6
+            "description": "Több forgási harmonikus (3x, 4x stb.) és esetleg félrendű komponensek jelenléte.",
+            "conditions": {
+                "harmonics_count_min": 4
+            },
+            "weight": 6,
+            "recommendation": "Csavarok nyomatékellenőrzése, fázis- és irányfüggés vizsgálata."
         },
         {
             "id": "foundation",
             "name": "Alap- vagy rögzítési probléma lehetősége",
-            "description": "Alacsony frekvenciás dominancia, géplábi mérésből megerősítendő.",
-            "conditions": {"1x_amp_min": 2.5},
-            "weight": 5
+            "description": "Alacsony frekvenciás dominancia, géplábi mérésből megerősítve.",
+            "conditions": {
+                "1x_amp_min": 2.5
+            },
+            "weight": 5,
+            "recommendation": "Géplábi és alaplemezi mérések összehasonlítása, 'puha láb' (soft foot) vizsgálat."
         }
     ]
 }
