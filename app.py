@@ -5,6 +5,12 @@ import json
 import io
 import time
 import zipfile
+
+# Add local directory to path to ensure modules are found in Streamlit Cloud
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from pumpdiag import demo, signal_processing, diagnostics, plotting, reporting
 
 # Session state initialization
@@ -29,9 +35,9 @@ def update_stale_state():
     if st.session_state.project_state['results'] is not None:
         st.session_state.project_state['is_stale'] = True
 
-st.set_page_config(page_title="PumpDiag Web v2", layout="wide")
+st.set_page_config(page_title="PumpDiag Web v2.1", layout="wide")
 
-st.title("PumpDiag Web - Szivattyúdiagnosztika v2.0")
+st.title("PumpDiag Web - Szivattyúdiagnosztika v2.1")
 st.markdown("*Javított, független vizsgálat alapján validált mérnöki prototípus.*")
 
 # Create tabs
@@ -123,7 +129,6 @@ with tabs[1]:
             cfg_env_low = st.number_input("Alsó határ", min_value=10, value=st.session_state.project_state['config'].get('env_band', [1000, 5000])[0], on_change=update_stale_state)
             cfg_env_high = st.number_input("Felső határ", min_value=100, value=st.session_state.project_state['config'].get('env_band', [1000, 5000])[1], on_change=update_stale_state)
             
-            # Measurement location metadata (essential for foundation rule)
             locs = ["(Ismeretlen)", "csapágyház", "gépláb", "alaplemez"]
             curr_loc = st.session_state.project_state['metadata'].get('measurement_location', "(Ismeretlen)")
             cfg_loc = st.selectbox("Mérési pont lokalizációja", locs, 
@@ -131,7 +136,6 @@ with tabs[1]:
                                  on_change=update_stale_state)
         
         if st.button("Elemzés indítása", type="primary"):
-            # Update state with UI values
             st.session_state.project_state['config'].update({
                 'channel': cfg_channel,
                 'unit': cfg_unit,
@@ -142,53 +146,61 @@ with tabs[1]:
                 st.session_state.project_state['metadata']['measurement_location'] = cfg_loc
                 
             with st.spinner("Adatminőség ellenőrzése és jelfeldolgozás..."):
-                t_arr = df_vib['time_s'].values
-                raw_sig = df_vib[cfg_channel].values
-                
-                # Unit conversion
-                sig_conv = signal_processing.convert_unit(raw_sig, cfg_unit)
-                
-                # Validations
-                time_ok, time_msg, actual_fs = signal_processing.check_time_axis(t_arr)
-                sig_ok, sig_msg, sig_ac = signal_processing.validate_signal(sig_conv, actual_fs)
-                
-                if not time_ok:
-                    st.error(f"Kritikus időalap hiba: {time_msg}")
-                    st.session_state.project_state['results'] = None
-                elif not sig_ok:
-                    st.error(f"Kritikus adatminőségi hiba: {sig_msg}")
-                    st.session_state.project_state['results'] = None
-                else:
-                    if time_msg != "OK":
-                        st.warning(time_msg) # Show sampling rate mismatch warning
-                        
-                    # Process
-                    features = signal_processing.calculate_time_features(sig_ac)
-                    xf, yf = signal_processing.calculate_fft(sig_ac, actual_fs)
+                try:
+                    t_arr = df_vib['time_s'].values
+                    raw_sig = df_vib[cfg_channel].values
                     
-                    env_ok, env_msg, exf, eyf = signal_processing.calculate_envelope_spectrum(sig_ac, actual_fs, band=(cfg_env_low, cfg_env_high))
-                    if not env_ok:
-                        st.warning(f"Burkológörbe számítás sikertelen: {env_msg}")
-                        env_features = None
+                    # Convert unit manually here to avoid attribute error if module reload failed
+                    if cfg_unit.lower() == 'g':
+                        sig_conv = raw_sig * 9.80665
                     else:
-                        env_features = {'has_peaks': np.max(eyf) > 0.05} if len(eyf) > 0 else None
+                        sig_conv = raw_sig
                     
-                    harmonics = signal_processing.extract_harmonics(xf, yf, cfg_rpm)
+                    # Validations
+                    time_ok, time_msg, actual_fs = signal_processing.check_time_axis(t_arr)
+                    sig_ok, sig_msg, sig_ac = signal_processing.validate_signal(sig_conv, actual_fs)
                     
-                    primary, diag_res = diagnostics.evaluate_diagnostics(
-                        features, harmonics, cfg_rpm, env_features, st.session_state.project_state['metadata']
-                    )
-                    
-                    st.session_state.project_state['results'] = {
-                        "channel": cfg_channel,
-                        "features": features,
-                        "xf": xf, "yf": yf,
-                        "exf": exf, "eyf": eyf,
-                        "primary_result": primary,
-                        "diag_results": diag_res
-                    }
-                    st.session_state.project_state['is_stale'] = False
-                    st.success("Elemzés és diagnosztika sikeresen befejeződött!")
+                    if not time_ok:
+                        st.error(f"Kritikus időalap hiba: {time_msg}")
+                        st.session_state.project_state['results'] = None
+                    elif not sig_ok:
+                        st.error(f"Kritikus adatminőségi hiba: {sig_msg}")
+                        st.session_state.project_state['results'] = None
+                    else:
+                        if time_msg != "OK":
+                            st.warning(time_msg)
+                            
+                        # Process
+                        features = signal_processing.calculate_time_features(sig_ac)
+                        xf, yf = signal_processing.calculate_fft(sig_ac, actual_fs)
+                        
+                        env_ok, env_msg, exf, eyf = signal_processing.calculate_envelope_spectrum(sig_ac, actual_fs, band=(cfg_env_low, cfg_env_high))
+                        if not env_ok:
+                            st.warning(f"Burkológörbe számítás sikertelen: {env_msg}")
+                            env_features = None
+                        else:
+                            env_features = {'has_peaks': np.max(eyf) > 0.05} if len(eyf) > 0 else None
+                        
+                        harmonics = signal_processing.extract_harmonics(xf, yf, cfg_rpm)
+                        
+                        primary, diag_res = diagnostics.evaluate_diagnostics(
+                            features, harmonics, cfg_rpm, env_features, st.session_state.project_state['metadata']
+                        )
+                        
+                        st.session_state.project_state['results'] = {
+                            "channel": cfg_channel,
+                            "features": features,
+                            "xf": xf, "yf": yf,
+                            "exf": exf, "eyf": eyf,
+                            "primary_result": primary,
+                            "diag_results": diag_res
+                        }
+                        st.session_state.project_state['is_stale'] = False
+                        st.success("Elemzés és diagnosztika sikeresen befejeződött!")
+                except Exception as e:
+                    st.error(f"Váratlan hiba történt az elemzés során: {str(e)}")
+                    import traceback
+                    st.code(traceback.format_exc())
     else:
         st.info("Kérjük, előbb töltsön be adatot az első fülön.")
 
@@ -200,17 +212,12 @@ with tabs[2]:
         res = st.session_state.project_state['results']
         df = st.session_state.project_state['df_vib']
         
-        # Time Series
         st.plotly_chart(plotting.plot_time_series(df, res['channel']), use_container_width=True)
-        
-        # FFT
         st.plotly_chart(plotting.plot_spectrum(res['xf'], res['yf'], st.session_state.project_state['config']['rpm']), use_container_width=True)
         
-        # Envelope
         if len(res['exf']) > 0:
             st.plotly_chart(plotting.plot_spectrum(res['exf'], res['eyf'], st.session_state.project_state['config']['rpm'], is_envelope=True), use_container_width=True)
             
-        # Operational Trend if available
         df_op = st.session_state.project_state.get('df_op')
         if df_op is not None and 'speed_rpm' in df_op.columns:
             st.plotly_chart(plotting.plot_trend(df_op, 'speed_rpm', 'Fordulatszám trend', 'RPM'), use_container_width=True)
@@ -227,7 +234,6 @@ with tabs[3]:
     if st.session_state.project_state['results'] is not None and not st.session_state.project_state['is_stale']:
         res = st.session_state.project_state['results']
         
-        # Primary finding
         st.info(f"**Elsődleges megállapítás:** {res['primary_result']}")
         
         col1, col2 = st.columns([1, 2])
@@ -302,13 +308,11 @@ with tabs[4]:
         if proj_file is not None and st.button("Projekt helyreállítása"):
             try:
                 with zipfile.ZipFile(proj_file, 'r') as z:
-                    # Validate ZIP contents before extracting blindly
                     files = z.namelist()
                     if "metadata.json" in files and "vibration_data.csv" in files:
                         meta = json.loads(z.read("metadata.json").decode('utf-8'))
                         cfg = json.loads(z.read("config.json").decode('utf-8')) if "config.json" in files else {}
                         
-                        # Load data safely
                         csv_data = io.BytesIO(z.read("vibration_data.csv"))
                         df = pd.read_csv(csv_data)
                         
@@ -316,7 +320,6 @@ with tabs[4]:
                         st.session_state.project_state['config'].update(cfg)
                         st.session_state.project_state['df_vib'] = df
                         
-                        # Clear old results to force reanalysis (safest option to ensure consistency with current code)
                         st.session_state.project_state['results'] = None
                         st.session_state.project_state['is_stale'] = True
                         
